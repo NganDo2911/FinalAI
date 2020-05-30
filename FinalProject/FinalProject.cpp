@@ -3,13 +3,14 @@
 
 #include <iostream>
 
+#define SIDE 20
 int main()
 {
 	int variables_values[] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19 };
 	std::string variable_names[] = {"Oradea","Zerind","Arad","Sibiu","Fagaras","Timisoara","Lugoj","Mehadia","Drobeta","Craiova",
 									"RiminicuVilcea","Pitesti","Bucharest","Giurgiu","Urziceni","Neamt","Iasi","Vaslui","Hirsova","Eforie"};
 
-	int adjacency[][20] = {
+	int adjacency[][SIDE] = {
 		{0,71,0,151,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},	//Oradea
 		{71,0,75,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},	//Zerind
 		{0,75,0,140,0,118,0,0,0,0,0,0,0,0,0,0,0,0,0,0},	//Arad
