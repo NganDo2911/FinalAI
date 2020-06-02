@@ -1,405 +1,150 @@
-// Puzzle.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
-
 #include <iostream>
+#include <vector>
+#include <queue>
+using namespace std;
 
-#include<stdio.h>
-#include<malloc.h>
-#include<string.h>
-
-enum class Actions { left, right, up, down };
-std::string action_names[] = { "left","right","up","down" };
-#define SIDE 3 // Length of the board 
-typedef struct Node_array
-{
-    int state[SIDE][SIDE];
-    Actions action;
-    struct Node_array* parent; // tree search
-
-    int path_cost;
-    int depth;
-    struct Node_array* nextNode; // list
-
-
-} Node;
-
-
-
-typedef struct NodeList {
-    unsigned int nodeCount;    //the number of nodes in the list
-    Node* head;            //pointer to the first node in the list
-    Node* tail;            //pointer to the last node in the list
+// data structure to store graph edges
+struct Edge {
+	int source, dest, weight;
 };
 
-
-
-void set_zero(int a[][SIDE])
+// class to represent a graph object
+class Graph
 {
-    int i, j;
-    for (i = 0; i < SIDE; i++)
-        for (j = 0; j < SIDE; j++)
-            a[i][j] = 0;
-}
+public:
+	// construct a vector of vectors to represent an adjacency list
+	vector<vector<int>> adjList;
 
-void copy_array(int a[][SIDE], int b[][SIDE])//copy b to a
+	// Graph Constructor
+	Graph(vector<Edge> const& edges, int N)
+	{
+		// resize the vector to 3*N elements of type vector<int>
+		adjList.resize(N);
+
+		// add edges to the undirected graph
+		for (auto& edge : edges)
+		{
+			int v = edge.source;
+			int u = edge.dest;
+			int weight = edge.weight;
+
+			//// create two new vertices v+N and v+2*N if the weight
+			//// of edge is 3x. Also, split the edge (v, u) into (v, v+N),
+			//// (v+N, v+2N) and (v+2N, u) each having weight x
+			//if (weight == 3 * x)
+			//{
+			//	adjList[v].push_back(v + N);
+			//	adjList[v + N].push_back(v + 2 * N);
+			//	adjList[v + 2 * N].push_back(u);
+			//}
+
+			//// create one new vertex v+N if the weight of the edge
+			//// is 2x. Also split the edge (v, u) into (v, v+N),
+			//// (v+N, u) each having weight x
+			//else if (weight == 2 * x)
+			//{
+			//	adjList[v].push_back(v + N);
+			//	adjList[v + N].push_back(u);
+			//}
+
+			//// no splitting is needed if edge weight is 1x
+			//else
+			adjList[v].push_back(u);
+		}
+	}
+};
+
+// Recursive function to print path of given vertex v from
+// the source vertex
+void printPath(vector<int> const& predecessor, int v, int& cost, int N)
 {
-    int i, j;
-    for (i = 0; i < SIDE; i++)
-        for (j = 0; j < SIDE; j++)
-            a[i][j] = b[i][j];
+	if (v < 0)
+		return;
+
+	printPath(predecessor, predecessor[v], cost, N);
+	cost++;
+
+	// consider only original nodes present in the graph
+	if (v < N)
+		cout << v << " ";
 }
 
-int is_equal(int a[][SIDE], int b[][SIDE])
+// Perform BFS on graph starting from vertex source
+void BFS(Graph const& graph, int source, int dest, int N)
 {
-    int i, j, flag = 1;
-    for (i = 0; i < SIDE; i++)
-        for (j = 0; j < SIDE; j++)
-            if (a[i][j] != b[i][j])
-                flag = 0;
-    return flag;
+	// stores vertex is discovered in BFS traversal or not
+	vector<bool> discovered(N, false);
+
+	// mark source vertex as discovered
+	discovered[source] = true;
+
+	// predecessor[] stores predecessor information. It is used
+	// to trace least cost path from destination back to source.
+	vector<int> predecessor(N, -1);
+
+	// create a queue used to do BFS and push source vertex
+	// into the queue
+	queue<int> q;
+	q.push(source);
+
+	// run till queue is not empty
+	while (!q.empty())
+	{
+		// pop front node from queue and print it
+		int curr = q.front();
+		q.pop();
+
+		// if destination vertex is reached
+		if (curr == dest)
+		{
+			int cost = 0;
+			cout << "Least path between " << source << " and " <<
+				dest << " is "; printPath(predecessor, dest, cost, N);
+		}
+
+		// do for every adjacent edge of current vertex
+		for (int v : graph.adjList[curr])
+		{
+			if (!discovered[v])
+			{
+				// mark it discovered and push it into queue
+				discovered[v] = true;
+				q.push(v);
+
+				// set curr as predecessor of vertex v
+				predecessor[v] = curr;
+			}
+		}
+	}
 }
 
-void swap(int& a, int& b)
-{
-    int temp;
-    temp = a;
-    a = b;
-    b = temp;
-}
-
-void print_array(int a[][SIDE])
-{
-    int i, j;
-    for (i = 0; i < SIDE; i++)
-    {
-        for (j = 0; j < SIDE; j++)
-            printf("%d  | ", a[i][j]);
-        printf("\n");
-        for (j = 0; j < SIDE; j++)
-            printf("---|-");
-
-        printf("\n");
-    }
-}
-
-bool isLegalAction(Node* node, Actions action) {
-    int index_i, index_j;
-    for (int i = 0; i < SIDE; i++) {
-        for (int j = 0; j < SIDE; j++) {
-            if (node->state[i][j] == 0) {
-                index_i = i;
-                index_j = j;
-                i = SIDE;
-                break;
-            }
-        }
-    }
-    if (action == Actions::left && index_j == 0)  return false;
-    if (action == Actions::right && index_j == 2)  return false;
-
-    switch (index_i)
-    {
-    case 0:
-        if (action == Actions::up) return false;
-        return true;
-    case 2:
-        if (action == Actions::down) return false;
-        return true;
-    default:
-        return true;
-    }
-    return true;
-}
-
-Node* Child_node(Node* node, Actions action) {
-    Node* child = (Node*)malloc(sizeof(Node));
-    int index_i, index_j;
-    for (int i = 0; i < SIDE; i++) {
-        for (int j = 0; j < SIDE; j++) {
-            if (node->state[i][j] == 0) {
-                index_i = i;
-                index_j = j;
-                i = SIDE;
-                break;
-            }
-        }
-    }
-    copy_array(child->state, node->state);
-    child->action = action;
-    child->parent = node;
-    child->path_cost = node->path_cost + 1;
-    if (action == Actions::left) {
-        swap(child->state[index_i][index_j - 1], child->state[index_i][index_j]);
-    }
-    else if (action == Actions::right) {
-        swap(child->state[index_i][index_j + 1], child->state[index_i][index_j]);
-    }
-    else if (action == Actions::up) {
-        swap(child->state[index_i - 1][index_j], child->state[index_i][index_j]);
-    }
-    else if (action == Actions::down) {
-        swap(child->state[index_i + 1][index_j], child->state[index_i][index_j]);
-    }
-    return child;
-}
-
-NodeList* FIFO_initial() {
-    NodeList* list;
-    list = (NodeList*)malloc(sizeof(NodeList));
-    list->nodeCount = 0;
-    list->head = NULL;
-    list->tail = NULL;
-    return list;
-}
-void FIFO_add(NodeList* list, Node* node) {
-    if (list->nodeCount <= 0) {
-        list->head = node;
-        list->tail = node;
-        list->nodeCount += 1;
-        return;
-    }
-
-    list->tail->nextNode = node;
-
-
-    list->tail = node;
-    list->nodeCount += 1;
-}
-
-Node* FIFO_pop(NodeList* list) {
-    if (list->nodeCount <= 0) {
-        return NULL;
-    }
-    Node* temp = list->head;
-    list->nodeCount -= 1;
-    if (list->nodeCount <= 0) {
-        list->head = NULL;
-        list->tail = NULL;
-    }
-    else {
-        list->head = temp->nextNode;
-    }
-    return temp;
-}
-void LIFO_push(NodeList* list, Node* node) {
-    Node* temp = (Node*)malloc(sizeof(Node));
-    if (list->nodeCount <= 0) {
-        list->head = node;
-        list->tail = node;
-        list->nodeCount += 1;
-        return;
-    }
-    temp = node;
-    temp->nextNode = list->head;
-    list->head = temp;
-    list->nodeCount += 1;
-}
-
-bool Max_pathcost(NodeList* list, Node* node) {
-    if (node->path_cost == list->tail->path_cost)
-        return true;
-    return false;
-}
-int Max_depth(NodeList* list) {
-    int max = 0;
-    while (list->head != NULL) {
-        if (list->head->depth > max) {
-            max = list->head->depth;
-        }
-        list->head = list->head->nextNode;
-    }
-    return max;
-}
-bool Goal_test(Node* node, Node* goal)
-{
-    return is_equal(node->state, goal->state);
-}
-
-bool checkExist(NodeList* list, Node* node) {
-    Node* _node;
-    int i = 0;
-    _node = list->head;
-    while (i < list->nodeCount) {
-        if (Goal_test(node, _node)) {
-            return true;
-        }
-        _node = _node->nextNode;
-        i++;
-    }
-    return false;
-}
-
-
-void Solution(Node* node) {
-    printf("=======================");
-    printf("\nSolution\n");
-    while (node->parent != NULL) {
-
-        print_array(node->state);
-        printf("\n----------^---------\n");
-        std::cout << "\naction: " << action_names[int(node->action)] << std::endl;
-        printf("----------------------\n");
-        node = node->parent;
-    }
-    print_array(node->state);
-
-}
-
-void breadthFirstSearch(Node* root, Node* goal) {
-    Node* node = root;
-    int Path_cost = 0;
-    if (Goal_test(node, goal)) {
-        Solution(node);
-        return;
-    }
-    NodeList* frontier;
-    NodeList* explorer;
-    frontier = FIFO_initial();
-    explorer = FIFO_initial();
-    int action;
-    FIFO_add(frontier, node);
-    do {
-        node = (FIFO_pop(frontier));
-        FIFO_add(explorer, node);
-        //action
-        for (action = 0; action < 4; action++) {
-            if (isLegalAction(node, (Actions)action)) {
-                Node* child = (Child_node(node, (Actions)action));
-                if (checkExist(explorer, child) == false || checkExist(frontier, child) == false) {
-                    if (Goal_test(child, goal)) {
-                        Solution(child);
-                        return;
-                    }
-                    FIFO_add(frontier, child);
-                }
-            }
-        }
-    } while (frontier->nodeCount > 0);
-}
-
-
-void depthFirstSearch(Node* root, Node* goal) {
-    Node* node = root;
-    int Path_cost = 0;
-    if (Goal_test(node, goal)) {
-        Solution(node);
-        return;
-    }
-    NodeList* frontier;
-    NodeList* explorer;
-    frontier = FIFO_initial();
-    explorer = FIFO_initial();
-    int action;
-    LIFO_push(frontier, node);
-
-    while (frontier->nodeCount != 0) {
-        node = FIFO_pop(frontier);
-        LIFO_push(explorer, node);
-        for (action = 0; action < 4; action++) {
-            if (isLegalAction(node, (Actions)action)) {
-                Node* child = (Child_node(node, (Actions)action));
-                if (checkExist(explorer, child) == false && checkExist(frontier, child) == false) {
-                    if (Goal_test(child, goal)) {
-                        Solution(child);
-                        return;
-                    }
-                    LIFO_push(frontier, child);
-                }
-            }
-        }
-    }
-}
-
-void uniformCostSearch(Node* root, Node* goal) {
-    Node* node = root;
-    int Path_cost = 0;
-    if (Goal_test(node, goal)) {
-        Solution(node);
-        return;
-    }
-    NodeList* frontier;
-    NodeList* explorer;
-    frontier = FIFO_initial();
-    explorer = FIFO_initial();
-    int action;
-    FIFO_add(frontier, node);
-    do {
-        node = (FIFO_pop(frontier));
-        FIFO_add(explorer, node);
-        //action
-        for (action = 0; action < 4; action++) {
-            if (isLegalAction(node, (Actions)action)) {
-                Node* child = (Child_node(node, (Actions)action));
-                if (checkExist(explorer, child) == false && checkExist(frontier, child) == false) {
-                    if (Goal_test(child, goal)) {
-                        Solution(child);
-                        return;
-                    }
-                    FIFO_add(frontier, child);
-                }
-                else if (checkExist(frontier, child) == true && Max_pathcost(frontier, child) == true) {
-                    node = child;
-                }
-            }
-        }
-    } while (frontier->nodeCount > 0);
-}
-int heuristic(Node* root, Node* goal) {
-    int temp = 0;
-    for (int i = 0; i < SIDE; i++) {
-        for (int j = 0; j < SIDE; j++) {
-            if (root->state[i][j] != goal->state[i][j] && root->state[i][j] != 0) {
-                temp += 1;
-            }
-        }
-    }
-    return temp;
-}
-int manhattan(Node* root, Node* goal) {
-    return heuristic(root, goal) + root->path_cost;
-}
-void aStarSearch(Node* root, Node* goal)
-{
-
-}
-
-
+// Least cost path in weighted digraph using BFS
 int main()
 {
-    Node* Goal, * Start;
-    int i, j;
-    Goal = (Node*)malloc(sizeof(Node));
-    Start = (Node*)malloc(sizeof(Node));
-    printf("Enter the goal state\n");
-    for (i = 0; i < 3; i++)
-        for (j = 0; j < 3; j++)
-            std::cin >> Goal->state[i][j];
-    printf("Goal state:\n");
-    print_array(Goal->state);
+	int x = 1;
 
-    Goal->parent = NULL;
-    Goal->depth = 0;
+	// vector of graph edges as per above diagram
+	vector<Edge> edges =
+	{
+		{0,1,71},{0,3,151},{1,2,75},{2,3,140},
+		{2,4,118}, {3,11,99},{3,9,80},{4,5,111},
+		{5,6,70},{6,7,75},{7,8,120},{8,9,146},
+		{8,10,138},{9,10,97},{10,12,101},{11,12,211},
+		{12,13,90},{12,14,85},{14,18,98},{14,15,142},
+		{15,16,92},{16,17,87},{18,19,86}
+	};
 
+	// Number of nodes in the graph
+	int N = 20;
 
+	// create a graph from edges
+	Graph graph(edges, N);
 
-    printf("Enter the current state\n");
-    for (i = 0; i < 3; i++)
-        for (j = 0; j < 3; j++)
-            std::cin >> Start->state[i][j];
-    Start->parent = NULL;
-    Start->path_cost = 0;
-    printf("Start state:\n");
-    print_array(Start->state);
-    int result = heuristic(Start, Goal);
-    std::cout << result << std::endl;
-    int result1 = manhattan(Start, Goal);
-    std::cout << result1 << std::endl;
-    return 0;
+	// given source and destination vertex
+	int source = 1, dest = 13;
+
+	// Do BFS traversal from given source
+	BFS(graph, source, dest, N);
+
+	return 0;
 }
-
-
-
-
-
-
-
