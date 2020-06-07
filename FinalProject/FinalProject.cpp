@@ -17,6 +17,7 @@ typedef struct node {
 	int depth;
 	int path_cost;
 }Node;
+
 class Graph {
 public:
 	vector<vector<Edge>> adjList;
@@ -24,20 +25,25 @@ public:
 		adjList.resize(V);
 		for (auto& edge : edges) {
 			adjList[edge.start].push_back(edge);
+			adjList[edge.end].push_back(edge);
 		}
 	}
 };
+
 void printPath(vector<vector<Edge>> adjList)
 {
 	for (int i = 0; i < adjList.size(); i++) {
 		cout << i << endl;
-		for (int j = 0; j < adjList[i].size(); j++) 
-		{
-			cout << "->" << adjList[i][j].end << " ";
+		for (int j = 0; j < adjList[i].size(); j++) {
+			if (adjList[i][j].start != i)
+				cout << "->" << adjList[i][j].start << " ";
+			if (adjList[i][j].end != i)
+				cout << "->" << adjList[i][j].end << " ";
 		}
 		cout << endl;
 	}
 }
+
 bool bfs(Graph const& g, int src, int dest, vector<bool> visited, int* pred, int n) {
 	queue<Node*> q;
 
@@ -45,18 +51,15 @@ bool bfs(Graph const& g, int src, int dest, vector<bool> visited, int* pred, int
 		visited[i] = false;
 		pred[i] = -1;
 	}
-
 	visited[src] = true;
 	Node* current = (Node*)malloc(sizeof(Node));
 	current->vertex = src;
 	current->depth = 0;
 	current->path_cost = 0;
 	q.push(current);
-
 	while (!q.empty()) {
 		Node* node = q.front();
 		q.pop();
-
 		int v = node->vertex;
 		int depth = node->depth;
 		int cost = node->path_cost;
@@ -69,7 +72,6 @@ bool bfs(Graph const& g, int src, int dest, vector<bool> visited, int* pred, int
 				newnode->path_cost = g.adjList[v][i].distance;
 				pred[g.adjList[v][i].end] = v;
 				q.push(newnode);
-
 				if (g.adjList[v][i].end == dest)
 					return true;
 			}
@@ -78,32 +80,111 @@ bool bfs(Graph const& g, int src, int dest, vector<bool> visited, int* pred, int
 	return false;
 }
 
-void printShortestDistance(Graph const& g, int src, int dest, vector<bool> visited, int n) {
-	int* pred = new int[n];
-	vector<int> path(n);
-
-	if (bfs(g, src, dest, visited, pred, n) == false) {
-		cout << "Given source and destination"
-			<< " are not connected";
-		return;
+void printPathFromAToB(vector<int> path, int dest, std::string variable_names[]) {
+	cout << "\nPath is::\n";
+	int j = dest;
+	for (int z = path.size() - 1; z >= 0; z--) {
+		if (path[z] == dest) {
+			j = z;
+			break;
+		}
 	}
+	cout << "Nguoi A khoi hanh tu thanh pho: " << variable_names[path[path.size() - 1]] << endl;
+	cout << "Nguoi B khoi hanh tu thanh pho: " << variable_names[path[j]] << endl;
+	for (int i = path.size() - 2; i >= 0; i--) {
+
+		cout << "Nguoi A di chuyen den thanh pho: " << variable_names[path[i]] << endl;
+		if (path[i] == path[j]) {
+			cout << "Hai nguoi da gap nhau tai thanh pho: " << variable_names[path[i]] << endl;
+			return;
+		}
+		j += 1;
+		cout << "Nguoi B di chuyen den thanh pho: " << variable_names[path[j]] << endl;
+		if (path[i] == path[j]) {
+			cout << "Hai nguoi da gap nhau tai thanh pho: " << variable_names[path[i]] << endl;
+			return;
+		}
+	}
+
+}
+
+void savePath(Graph const& g, int src, int dest, vector<bool> visited, int n, int* pred, vector<int> path, std::string variable_names[]) {
+
 	int crawl = dest;
 	path.push_back(crawl);
 	while (pred[crawl] != -1) {
 		path.push_back(pred[crawl]);
 		crawl = pred[crawl];
 	}
-
-	// printing path from source to destination 
-	cout << "\nPath is::\n";
-	for (int i = path.size() - 1; i >= 0; i--) {
-		cout << path[i] << " ";
-		if (path[i] == dest)
-			return;
-	}
-
-
+	printPathFromAToB(path, dest, variable_names);
 }
+
+int findLowestCostEdge(Graph const& g, int v, int cost) {
+	int minCost = INT_MAX;
+	for (int i = 0; i < g.adjList[v].size(); i++) {
+		if (g.adjList[v][i].distance + cost <= minCost) {
+			minCost = g.adjList[v][i].distance + cost;
+		}
+	}
+	return minCost;
+}
+
+//bool checkExit(queue<Node*> q, Node* node) {
+//	while 
+//}
+
+bool ucs(Graph const& g, int src, int dest, vector<bool> visited, int* pred, int n) {
+	queue<Node*> q;
+	queue<Node*> explored;
+	for (int i = 0; i < n; i++) {
+		visited[i] = false;
+		pred[i] = -1;
+	}
+	visited[src] = true;
+	Node* current = (Node*)malloc(sizeof(Node));
+	current->vertex = src;
+	current->depth = 0;
+	current->path_cost = 0;
+	q.push(current);
+	while (!q.empty()) {
+		Node* node = q.front();
+		q.pop();
+		int v = node->vertex;
+		int depth = node->depth;
+		int cost = node->path_cost;
+		explored.push(node);
+		for (int i = 0; i < g.adjList[v].size(); i++) {
+			Node* newnode = (Node*)malloc(sizeof(Node));
+			if (g.adjList[v][i].start != v) {
+				if (visited[g.adjList[v][i].start] == false && (g.adjList[v][i].distance + cost) == findLowestCostEdge(g, v, cost)) {
+					visited[g.adjList[v][i].start] = true;
+					newnode->vertex = g.adjList[v][i].start;
+					newnode->depth = depth + 1;
+					newnode->path_cost = g.adjList[v][i].distance + cost;
+					pred[g.adjList[v][i].start] = v;
+					q.push(newnode);
+					if (g.adjList[v][i].start == dest)
+						return true;
+				}
+			}
+			if (g.adjList[v][i].end != v) {
+				if (visited[g.adjList[v][i].end] == false && (g.adjList[v][i].distance + cost) == findLowestCostEdge(g, v, cost)) {
+					visited[g.adjList[v][i].end] = true;
+					newnode->vertex = g.adjList[v][i].end;
+					newnode->depth = depth + 1;
+					newnode->path_cost = g.adjList[v][i].distance + cost;
+					pred[g.adjList[v][i].end] = v;
+					q.push(newnode);
+					if (g.adjList[v][i].end == dest)
+						return true;
+				}
+			}
+
+		}
+	}
+	return false;
+}
+
 
 enum city {
 	Oradea,
@@ -127,6 +208,7 @@ enum city {
 	Hirsova,
 	Eforie
 };
+
 void khoiTaoThanhPho() {
 	std::cout << "0. Oradea" << std::endl;
 	std::cout << "1. Zerind" << std::endl;
@@ -150,7 +232,6 @@ void khoiTaoThanhPho() {
 	std::cout << "19.Eforie" << std::endl;
 }
 
-
 void chonThanhPho(int viTriNguoiA)
 {
 	switch (viTriNguoiA) {
@@ -169,10 +250,6 @@ void chonThanhPho(int viTriNguoiA)
 	case city::Sibiu:
 		std::cout << "Ban chon Sibiu" << std::endl;
 		viTriNguoiA = city::Sibiu;
-		break;
-	case city::Fagaras:
-		std::cout << "Ban chon Fagaras" << std::endl;
-		viTriNguoiA = city::Fagaras;
 		break;
 	case city::Timisoara:
 		std::cout << "Ban chon Timisoara" << std::endl;
@@ -202,6 +279,10 @@ void chonThanhPho(int viTriNguoiA)
 		std::cout << "Ban chon Pitesti" << std::endl;
 		viTriNguoiA = city::Pitesti;
 		break;
+	case city::Fagaras:
+		std::cout << "Ban chon Fagaras" << std::endl;
+		viTriNguoiA = city::Fagaras;
+		break;
 	case city::Bucharest:
 		std::cout << "Ban chon Bucharest" << std::endl;
 		viTriNguoiA = city::Bucharest;
@@ -214,16 +295,16 @@ void chonThanhPho(int viTriNguoiA)
 		std::cout << "Ban chon Urziceni" << std::endl;
 		viTriNguoiA = city::Urziceni;
 		break;
-	case city::Neamt:
-		std::cout << "Ban chon Neamt" << std::endl;
+	case city::Vaslui:
+		std::cout << "Ban chon Vaslui" << std::endl;
 		viTriNguoiA = city::Neamt;
 		break;
 	case city::Iasi:
 		std::cout << "Ban chon Iasi" << std::endl;
 		viTriNguoiA = city::Iasi;
 		break;
-	case city::Vaslui:
-		std::cout << "Ban chon Vaslui" << std::endl;
+	case city::Neamt:
+		std::cout << "Ban chon Neamt" << std::endl;
 		viTriNguoiA = city::Vaslui;
 		break;
 	case city::Hirsova:
@@ -239,10 +320,12 @@ void chonThanhPho(int viTriNguoiA)
 	};
 }
 
-
 int main()
 {
 	// Create a graph given in the above diagram 
+	//int variables_values[] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19 };
+	std::string variable_names[] = { "Oredea", "Zerind","Arad","Sibiu","Timisoara","Lugoj","Mehadia","Drobeta","Cariova","Rimivicea",
+									"Pitesti","Fafaras","Buchares","Giurgiu","Urzicen","Vaslui","Iasi","Neamt","Hirsova","Eforie" };
 	vector<Edge> edges =
 	{
 		{0,1,71},{0,3,151},{1,2,75},{2,3,140},
@@ -255,7 +338,8 @@ int main()
 	int N = 20;
 	Graph g(edges, N);
 	vector<bool> visited(N);
-	int* path = new int[N];
+	int* pred = new int[N];
+	vector<int> path(N);
 	std::cout << "Chon thanh pho cho nguoi A" << std::endl;
 	khoiTaoThanhPho();
 	int viTriNguoiA;
@@ -271,13 +355,22 @@ int main()
 	chonThanhPho(viTriNguoiB);
 	std::cout << std::endl;
 
-	//printPath(g.adjList);
-	if (bfs(g, viTriNguoiA, viTriNguoiB, visited, path, N) == false) {
-		cout << "False";
+
+	/*if (bfs(g,viTriNguoiA,viTriNguoiB,visited, pred,N) == false) {
+		cout << "Not Find Path From A To B";
 	}
 	else {
-		printShortestDistance(g, viTriNguoiA, viTriNguoiB, visited, N);
-		cout << "True";
+		savePath(g, viTriNguoiA, viTriNguoiB, visited, N, pred,path,variable_names);
+	}*/
+
+	if (ucs(g, viTriNguoiA, viTriNguoiB, visited, pred, N) == false) {
+		cout << "Not Find Path From A To B";
 	}
+	else {
+		savePath(g, viTriNguoiA, viTriNguoiB, visited, N, pred, path, variable_names);
+	}
+	//printPath(g.adjList);
+
+
 	return 0;
 }

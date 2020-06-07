@@ -1,5 +1,5 @@
 ﻿  FinalProject.cpp
-D:\AI - cuối kì\FinalAI\FinalProject\FinalProject.cpp(32,20): warning C4018: '<': signed/unsigned mismatch
-D:\AI - cuối kì\FinalAI\FinalProject\FinalProject.cpp(34,21): warning C4018: '<': signed/unsigned mismatch
-D:\AI - cuối kì\FinalAI\FinalProject\FinalProject.cpp(63,21): warning C4018: '<': signed/unsigned mismatch
-  FinalProject.vcxproj -> D:\AI - cuối kì\FinalAI\Debug\FinalProject.exe
+D:\IT\NAM3_HK2\TTNT_Mr.Phung\DoAn\FinalProject\FinalProject\FinalProject.cpp(32,20): warning C4018: '<': signed/unsigned mismatch
+D:\IT\NAM3_HK2\TTNT_Mr.Phung\DoAn\FinalProject\FinalProject\FinalProject.cpp(34,21): warning C4018: '<': signed/unsigned mismatch
+D:\IT\NAM3_HK2\TTNT_Mr.Phung\DoAn\FinalProject\FinalProject\FinalProject.cpp(63,21): warning C4018: '<': signed/unsigned mismatch
+  FinalProject.vcxproj -> D:\IT\NAM3_HK2\TTNT_Mr.Phung\DoAn\FinalProject\Debug\FinalProject.exe
