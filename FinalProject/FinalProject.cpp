@@ -31,7 +31,8 @@ void printPath(vector<vector<Edge>> adjList)
 {
 	for (int i = 0; i < adjList.size(); i++) {
 		cout << i << endl;
-		for (int j = 0; j < adjList[i].size(); j++) {
+		for (int j = 0; j < adjList[i].size(); j++) 
+		{
 			cout << "->" << adjList[i][j].end << " ";
 		}
 		cout << endl;
@@ -101,6 +102,7 @@ void printShortestDistance(Graph const& g, int src, int dest, vector<bool> visit
 			return;
 	}
 
+
 }
 
 enum city {
@@ -108,7 +110,6 @@ enum city {
 	Zerind,
 	Arad,
 	Sibiu,
-	Fagaras,
 	Timisoara,
 	Lugoj,
 	Mehadia,
@@ -116,12 +117,13 @@ enum city {
 	Craiova,
 	RiminicuVilcea,
 	Pitesti,
+	Fagaras,
 	Bucharest,
 	Giurgiu,
 	Urziceni,
-	Neamt,
-	Iasi,
 	Vaslui,
+	Iasi,
+	Neamt,
 	Hirsova,
 	Eforie
 };
@@ -130,20 +132,20 @@ void khoiTaoThanhPho() {
 	std::cout << "1. Zerind" << std::endl;
 	std::cout << "2. Arad" << std::endl;
 	std::cout << "3. Sibiu" << std::endl;
-	std::cout << "4. Fagaras" << std::endl;
-	std::cout << "5. Timisoara" << std::endl;
-	std::cout << "6. Lugoj" << std::endl;
-	std::cout << "7. Mehadia" << std::endl;
-	std::cout << "8. Drobeta" << std::endl;
-	std::cout << "9. Craiova" << std::endl;
-	std::cout << "10.RiminicuVilcea" << std::endl;
-	std::cout << "11.Pitesti" << std::endl;
+	std::cout << "4. Timisoara" << std::endl;
+	std::cout << "5. Lugoj" << std::endl;
+	std::cout << "6. Mehadia" << std::endl;
+	std::cout << "7. Drobeta" << std::endl;
+	std::cout << "8. Craivoa" << std::endl;
+	std::cout << "9. RiminicuVilcea" << std::endl;
+	std::cout << "10.Pitesti" << std::endl;
+	std::cout << "11.Fagaras" << std::endl;
 	std::cout << "12.Bucharest" << std::endl;
 	std::cout << "13.Giurgiu" << std::endl;
 	std::cout << "14.Urziceni" << std::endl;
-	std::cout << "15.Neamt" << std::endl;
+	std::cout << "15.Vaslui" << std::endl;
 	std::cout << "16.Iasi" << std::endl;
-	std::cout << "17.Vaslui" << std::endl;
+	std::cout << "17.Neamt" << std::endl;
 	std::cout << "18.Hirsova" << std::endl;
 	std::cout << "19.Eforie" << std::endl;
 }
