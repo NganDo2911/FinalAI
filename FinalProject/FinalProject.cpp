@@ -3,6 +3,8 @@
 #include<iostream> 
 #include <vector> 
 #include <queue>
+#include <list>
+#include <map>
 
 using namespace std;
 
@@ -16,71 +18,120 @@ typedef struct node {
 	int vertex;
 	int depth;
 	int path_cost;
+	struct node* nextNode;
+	struct node* parent;
 }Node;
+
+typedef struct NodeList {
+	unsigned int nodeCount;    //the number of nodes in the list
+	Node* head;            //pointer to the first node in the list
+	Node* tail;            //pointer to the last node in the list
+};
+
+NodeList* FIFO_initial() {
+	NodeList* list;
+	list = (NodeList*)malloc(sizeof(NodeList));
+	list->nodeCount = 0;
+	list->head = NULL;
+	list->tail = NULL;
+	return list;
+}
+void FIFO_add(NodeList* list, Node* node) {
+	if (list->nodeCount <= 0) {
+		list->head = node;
+		list->tail = node;
+		list->nodeCount += 1;
+		return;
+	}
+	if (node->path_cost)
+		list->tail->nextNode = node;
+
+
+	list->tail = node;
+	list->nodeCount += 1;
+}
+
+Node* FIFO_pop(NodeList* list) {
+	if (list->nodeCount <= 0) {
+		return NULL;
+	}
+	Node* temp = list->head;
+	list->nodeCount -= 1;
+	if (list->nodeCount <= 0) {
+		list->head = NULL;
+		list->tail = NULL;
+	}
+	else {
+		list->head = temp->nextNode;
+	}
+	return temp;
+}
 
 class Graph {
 public:
 	vector<vector<Edge>> adjList;
-	Graph(const vector<Edge>& edges, int V) {
+	Graph(const vector<Edge>& edges, int V) {		// dua cac dinh vao ma tran ke 
 		adjList.resize(V);
 		for (auto& edge : edges) {
 			adjList[edge.start].push_back(edge);
-			adjList[edge.end].push_back(edge);
+			adjList[edge.end].push_back({ edge.end,edge.start,edge.distance });
 		}
 	}
+	vector<int> bfs(Graph const& g, int src, int dest, vector<bool> visited, int* pred, int n);
+	void ucs(Graph const& g, int src, int dest, vector<bool> visited, int* pred, int n);
 };
 
-void printPath(vector<vector<Edge>> adjList)
+void printEdge(vector<vector<Edge>> adjList)			//in ra cac dinh ke 
 {
-	for (int i = 0; i < adjList.size(); i++) {
-		cout << i << endl;
-		for (int j = 0; j < adjList[i].size(); j++) {
-			if (adjList[i][j].start != i)
-				cout << "->" << adjList[i][j].start << " ";
-			if (adjList[i][j].end != i)
-				cout << "->" << adjList[i][j].end << " ";
+	std::vector<vector<Edge>>::iterator i;
+	std::vector<Edge>::iterator j;
+	for (i = adjList.begin(); i != adjList.end(); ++i) {
+		for (j = i->begin(); j != i->end(); ++j) {
+			cout << "->" << j->end << " " << j->distance << endl;
 		}
-		cout << endl;
 	}
 }
-
-bool bfs(Graph const& g, int src, int dest, vector<bool> visited, int* pred, int n) {
-	queue<Node*> q;
-
-	for (int i = 0; i < n; i++) {
-		visited[i] = false;
-		pred[i] = -1;
-	}
-	visited[src] = true;
-	Node* current = (Node*)malloc(sizeof(Node));
-	current->vertex = src;
-	current->depth = 0;
-	current->path_cost = 0;
-	q.push(current);
-	while (!q.empty()) {
-		Node* node = q.front();
-		q.pop();
-		int v = node->vertex;
-		int depth = node->depth;
-		int cost = node->path_cost;
-		for (int i = 0; i < g.adjList[v].size(); i++) {
-			Node* newnode = (Node*)malloc(sizeof(Node));
-			if (visited[g.adjList[v][i].end] == false) {
-				visited[g.adjList[v][i].end] = true;
-				newnode->vertex = g.adjList[v][i].end;
-				newnode->depth = depth + 1;
-				newnode->path_cost = g.adjList[v][i].distance;
-				pred[g.adjList[v][i].end] = v;
-				q.push(newnode);
-				if (g.adjList[v][i].end == dest)
-					return true;
-			}
+bool checkExit(NodeList* q, Node* node) {
+	Node* _node;
+	int i = 0;
+	_node = q->head;
+	while (i < q->nodeCount) {
+		if (_node->vertex == node->vertex) {
+			return true;
 		}
+		_node = _node->nextNode;
+		i++;
 	}
 	return false;
 }
 
-void printPathFromAToB(vector<int> path, int dest, std::string variable_names[]) {
+vector<int> printPath(Node* node, int src, vector<int>& path) {
+	int i = 0;
+	while (node->parent != NULL) {
+		//cout << node->vertex << " ";
+		path[i] = node->vertex;
+		i++;
+		if (node->vertex == src)
+			return path;
+		node = node->parent;
+	}
+}
+
+void savePath(Node* node, int src, int& soDinh)
+{
+	soDinh = 0;
+	while (node->parent != NULL) {
+		soDinh++;
+		if (node->vertex == src)
+			return;
+		node = node->parent;
+	}
+}
+
+void tinhThoiGian(vector<int> path, vector<vector<int>>adj) {
+
+}
+void printPathFromAToB(vector<int> path, int dest, std::string variable_names[]) {			//in ra duong di 
 	cout << "\nPath is::\n";
 	int j = dest;
 	for (int z = path.size() - 1; z >= 0; z--) {
@@ -106,85 +157,91 @@ void printPathFromAToB(vector<int> path, int dest, std::string variable_names[])
 		}
 	}
 
+
 }
-
-void savePath(Graph const& g, int src, int dest, vector<bool> visited, int n, int* pred, vector<int> path, std::string variable_names[]) {
-
-	int crawl = dest;
-	path.push_back(crawl);
-	while (pred[crawl] != -1) {
-		path.push_back(pred[crawl]);
-		crawl = pred[crawl];
-	}
-	printPathFromAToB(path, dest, variable_names);
-}
-
-int findLowestCostEdge(Graph const& g, int v, int cost) {
+vector<int> Graph::bfs(Graph const& g, int src, int dest, vector<bool> visited, int* pred, int n) {
+	NodeList* frontier;
+	NodeList* explorer;
 	int minCost = INT_MAX;
-	for (int i = 0; i < g.adjList[v].size(); i++) {
-		if (g.adjList[v][i].distance + cost <= minCost) {
-			minCost = g.adjList[v][i].distance + cost;
-		}
-	}
-	return minCost;
-}
-
-//bool checkExit(queue<Node*> q, Node* node) {
-//	while 
-//}
-
-bool ucs(Graph const& g, int src, int dest, vector<bool> visited, int* pred, int n) {
-	queue<Node*> q;
-	queue<Node*> explored;
-	for (int i = 0; i < n; i++) {
-		visited[i] = false;
-		pred[i] = -1;
-	}
-	visited[src] = true;
+	int soDinh;
+	vector<int>path(n);		//danh sach cac duong co the di
+	vector<int>listpath;
+	frontier = FIFO_initial();
+	explorer = FIFO_initial();
 	Node* current = (Node*)malloc(sizeof(Node));
 	current->vertex = src;
 	current->depth = 0;
 	current->path_cost = 0;
-	q.push(current);
-	while (!q.empty()) {
-		Node* node = q.front();
-		q.pop();
-		int v = node->vertex;
-		int depth = node->depth;
-		int cost = node->path_cost;
-		explored.push(node);
-		for (int i = 0; i < g.adjList[v].size(); i++) {
-			Node* newnode = (Node*)malloc(sizeof(Node));
-			if (g.adjList[v][i].start != v) {
-				if (visited[g.adjList[v][i].start] == false && (g.adjList[v][i].distance + cost) == findLowestCostEdge(g, v, cost)) {
-					visited[g.adjList[v][i].start] = true;
-					newnode->vertex = g.adjList[v][i].start;
-					newnode->depth = depth + 1;
-					newnode->path_cost = g.adjList[v][i].distance + cost;
-					pred[g.adjList[v][i].start] = v;
-					q.push(newnode);
-					if (g.adjList[v][i].start == dest)
-						return true;
+	FIFO_add(frontier, current);
+	do {
+		current = (FIFO_pop(frontier));
+		FIFO_add(explorer, current);
+		int v = current->vertex;
+		int depth = current->depth;
+		int cost = current->path_cost;
+		std::vector<Edge>::iterator j;
+		for (j = adjList[v].begin(); j != g.adjList[v].end(); ++j) {
+			Node* child = (Node*)malloc(sizeof(Node));
+			child->vertex = j->end;
+			child->path_cost = j->distance + cost;
+			child->parent = current;
+			if ((checkExit(frontier, child) == false || checkExit(explorer, child) == false)) {
+				if (child->vertex == dest) {
+					savePath(child, src, soDinh);
+					if (soDinh % 2 == 1) {
+						return printPath(child, src, path);
+					}
 				}
+				FIFO_add(frontier, child);
 			}
-			if (g.adjList[v][i].end != v) {
-				if (visited[g.adjList[v][i].end] == false && (g.adjList[v][i].distance + cost) == findLowestCostEdge(g, v, cost)) {
-					visited[g.adjList[v][i].end] = true;
-					newnode->vertex = g.adjList[v][i].end;
-					newnode->depth = depth + 1;
-					newnode->path_cost = g.adjList[v][i].distance + cost;
-					pred[g.adjList[v][i].end] = v;
-					q.push(newnode);
-					if (g.adjList[v][i].end == dest)
-						return true;
-				}
-			}
-
 		}
-	}
-	return false;
+	} while (frontier->nodeCount > 0);
 }
 
+void Graph::ucs(Graph const& g, int src, int dest, vector<bool> visited, int* pred, int n) {
+	NodeList* frontier;
+	NodeList* explorer;
+	priority_queue<int> pq;
+	int minCost = INT_MAX;
+	int soDinh;
+	vector<int>path(n);		//danh sach cac duong co the di
+	vector<int>listpath;
+	frontier = FIFO_initial();
+	explorer = FIFO_initial();
+	Node* current = (Node*)malloc(sizeof(Node));
+	current->vertex = src;
+	current->depth = 0;
+	current->path_cost = 0;
+
+	FIFO_add(frontier, current);
+	do {
+		current = (FIFO_pop(frontier));
+		FIFO_add(explorer, current);
+		int v = current->vertex;
+		int depth = current->depth;
+		int cost = current->path_cost;
+		std::vector<Edge>::iterator j;
+		for (j = adjList[v].begin(); j != g.adjList[v].end(); ++j) {
+			Node* child = (Node*)malloc(sizeof(Node));
+			child->vertex = j->end;
+			child->path_cost = j->distance + cost;
+			child->parent = current;
+			if (checkExit(frontier, child) == false || checkExit(explorer, child) == false) {
+				if (child->vertex == dest) {
+					savePath(child, src, soDinh);
+					if (soDinh % 2 == 1) {
+						printPath(child, src, path);
+						return;
+					}
+				}
+				FIFO_add(frontier, child);
+			}
+			/*else if (checkExit(frontier, child) == true && ) {
+
+			}*/
+		}
+	} while (frontier->nodeCount > 0);
+}
 
 enum city {
 	Oradea,
@@ -324,8 +381,10 @@ int main()
 {
 	// Create a graph given in the above diagram 
 	//int variables_values[] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19 };
-	std::string variable_names[] = { "Oredea", "Zerind","Arad","Sibiu","Timisoara","Lugoj","Mehadia","Drobeta","Cariova","Rimivicea",
-									"Pitesti","Fafaras","Buchares","Giurgiu","Urzicen","Vaslui","Iasi","Neamt","Hirsova","Eforie" };
+	std::string variable_names[] = { "Oredea", "Zerind","Arad","Sibiu","Timisoara",
+									"Lugoj","Mehadia","Drobeta","Cariova","Rimivicea",
+									"Pitesti","Fafaras","Buchares","Giurgiu","Urzicen",
+									"Vaslui","Iasi","Neamt","Hirsova","Eforie" };
 	vector<Edge> edges =
 	{
 		{0,1,71},{0,3,151},{1,2,75},{2,3,140},
@@ -355,21 +414,8 @@ int main()
 	chonThanhPho(viTriNguoiB);
 	std::cout << std::endl;
 
+	printEdge(g.adjList);
 
-	/*if (bfs(g,viTriNguoiA,viTriNguoiB,visited, pred,N) == false) {
-		cout << "Not Find Path From A To B";
-	}
-	else {
-		savePath(g, viTriNguoiA, viTriNguoiB, visited, N, pred,path,variable_names);
-	}*/
-
-	if (ucs(g, viTriNguoiA, viTriNguoiB, visited, pred, N) == false) {
-		cout << "Not Find Path From A To B";
-	}
-	else {
-		savePath(g, viTriNguoiA, viTriNguoiB, visited, N, pred, path, variable_names);
-	}
-	//printPath(g.adjList);
 
 
 	return 0;
