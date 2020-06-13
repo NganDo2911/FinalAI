@@ -77,8 +77,9 @@ public:
 			adjList[edge.end].push_back({ edge.end,edge.start,edge.distance });
 		}
 	}
-	vector<int> bfs(Graph const& g, int src, int dest, vector<bool> visited, int* pred, int n);
+	bool bfs(Graph const& g, int src, int dest, vector<int>& path, int n);
 	void ucs(Graph const& g, int src, int dest, vector<bool> visited, int* pred, int n);
+	int tinhThoiGian(vector<int> path, vector<vector<Edge>>adj);
 };
 
 void printEdge(vector<vector<Edge>> adjList)			//in ra cac dinh ke 
@@ -105,31 +106,50 @@ bool checkExit(NodeList* q, Node* node) {
 	return false;
 }
 
-vector<int> printPath(Node* node, int src, vector<int>& path) {
-	int i = 0;
-	while (node->parent != NULL) {
-		//cout << node->vertex << " ";
-		path[i] = node->vertex;
-		i++;
-		if (node->vertex == src)
-			return path;
-		node = node->parent;
+void printPath(vector<int>& path, int src) {
+	std::vector<int>::iterator i;
+	for (i = path.begin(); i != path.end(); ++i) {
+		cout << *i << " ";
+		if (*i == src)
+			break;
 	}
 }
 
-void savePath(Node* node, int src, int& soDinh)
+void savePath(Node* node, int src, int& soDinh, vector<int>& path)
 {
 	soDinh = 0;
 	while (node->parent != NULL) {
+		path[soDinh] = node->vertex;
 		soDinh++;
-		if (node->vertex == src)
+		if (node->vertex == src) {
+			path.resize(soDinh);
 			return;
+		}
 		node = node->parent;
 	}
 }
 
-void tinhThoiGian(vector<int> path, vector<vector<int>>adj) {
-
+int Graph::tinhThoiGian(vector<int> path, vector<vector<Edge>>adj) {
+	int* cost = (int*)malloc(path.size() - 1 * sizeof(int));
+	int sum = 0;
+	std::vector<Edge>::iterator j;
+	std::vector<vector<Edge>>::iterator it;
+	for (int i = 0; i < path.size() - 1; i++) {
+		for (j = adj[path[i]].begin(); j != adj[path[i]].end(); ++j) {
+			if (j->end == path[i + 1])
+				cost[i] = j->distance;
+		}
+	}
+	int i = 0;
+	int z = path.size() - 2;
+	while (i < path.size() / 2 && z >= path.size() / 2) {
+		sum += cost[i];
+		sum += cost[z];
+		sum += abs(cost[i] - cost[z]);
+		i++;
+		z--;
+	}
+	return sum;
 }
 void printPathFromAToB(vector<int> path, int dest, std::string variable_names[]) {			//in ra duong di 
 	cout << "\nPath is::\n";
@@ -159,13 +179,13 @@ void printPathFromAToB(vector<int> path, int dest, std::string variable_names[])
 
 
 }
-vector<int> Graph::bfs(Graph const& g, int src, int dest, vector<bool> visited, int* pred, int n) {
+bool Graph::bfs(Graph const& g, int src, int dest, vector<int>& path, int n) {
 	NodeList* frontier;
 	NodeList* explorer;
 	int minCost = INT_MAX;
 	int soDinh;
-	vector<int>path(n);		//danh sach cac duong co the di
-	vector<int>listpath;
+	//danh sach cac duong co the di
+//vector<int>listpath;
 	frontier = FIFO_initial();
 	explorer = FIFO_initial();
 	Node* current = (Node*)malloc(sizeof(Node));
@@ -181,21 +201,24 @@ vector<int> Graph::bfs(Graph const& g, int src, int dest, vector<bool> visited, 
 		int cost = current->path_cost;
 		std::vector<Edge>::iterator j;
 		for (j = adjList[v].begin(); j != g.adjList[v].end(); ++j) {
+			path.resize(n);
 			Node* child = (Node*)malloc(sizeof(Node));
 			child->vertex = j->end;
-			child->path_cost = j->distance + cost;
+			child->path_cost = j->distance;
 			child->parent = current;
 			if ((checkExit(frontier, child) == false || checkExit(explorer, child) == false)) {
 				if (child->vertex == dest) {
-					savePath(child, src, soDinh);
-					if (soDinh % 2 == 1) {
-						return printPath(child, src, path);
+					savePath(child, src, soDinh, path);
+					if (soDinh % 2 == 1 && soDinh != 1) {
+						return true;
+						//return tinhThoiGian(path, g.adjList);
 					}
 				}
 				FIFO_add(frontier, child);
 			}
 		}
 	} while (frontier->nodeCount > 0);
+	return false;
 }
 
 void Graph::ucs(Graph const& g, int src, int dest, vector<bool> visited, int* pred, int n) {
@@ -228,11 +251,11 @@ void Graph::ucs(Graph const& g, int src, int dest, vector<bool> visited, int* pr
 			child->parent = current;
 			if (checkExit(frontier, child) == false || checkExit(explorer, child) == false) {
 				if (child->vertex == dest) {
-					savePath(child, src, soDinh);
-					if (soDinh % 2 == 1) {
-						printPath(child, src, path);
-						return;
-					}
+					/*	savePath(child, src, soDinh);
+						if (soDinh % 2 == 1) {
+							printPath(child, src, path);
+							return;
+						}*/
 				}
 				FIFO_add(frontier, child);
 			}
@@ -416,6 +439,16 @@ int main()
 
 	printEdge(g.adjList);
 
+	if (viTriNguoiA == viTriNguoiB) {
+		cout << "Hai nguoi dang tren cung mot thanh pho" << endl;
+	}
+	else if (g.bfs(g, viTriNguoiA, viTriNguoiB, path, N) == true) {
+		printPathFromAToB(path, viTriNguoiB, variable_names);
+		cout << "Tong thoi gian di va cho cua ca hai nguoi la: " << g.tinhThoiGian(path, g.adjList) << endl;
+	}
+	else {
+		cout << "Not Found" << endl;
+	}
 
 
 	return 0;
