@@ -22,6 +22,8 @@ typedef struct node {
 	struct node* parent;
 }Node;
 
+typedef pair<int, int> iPair;
+
 typedef struct NodeList {
 	unsigned int nodeCount;    //the number of nodes in the list
 	Node* head;            //pointer to the first node in the list
@@ -78,7 +80,7 @@ public:
 		}
 	}
 	bool bfs(Graph const& g, int src, int dest, vector<int>& path, int n);
-	void ucs(Graph const& g, int src, int dest, vector<bool> visited, int* pred, int n);
+	bool ucs(Graph const& g, int src, int dest, vector<int>& path, int n);
 	int tinhThoiGian(vector<int> path, vector<vector<Edge>>adj);
 };
 
@@ -127,6 +129,15 @@ void savePath(Node* node, int src, int& soDinh, vector<int>& path)
 		}
 		node = node->parent;
 	}
+}
+
+bool checkExitList(list<int> q, int x) {
+	std::list<int>::iterator i;
+	for (i = q.begin(); i != q.end(); ++i) {
+		if ((*i) == x)
+			return false;
+	}
+	return true;
 }
 
 int Graph::tinhThoiGian(vector<int> path, vector<vector<Edge>>adj) {
@@ -181,6 +192,48 @@ void printPathFromAToB(vector<int> path, int dest, std::string variable_names[])
 }
 bool Graph::bfs(Graph const& g, int src, int dest, vector<int>& path, int n) {
 	NodeList* frontier;
+	list<int> explorer;
+	int minCost = INT_MAX;
+	int soDinh;
+	//danh sach cac duong co the di
+//vector<int>listpath;
+	frontier = FIFO_initial();
+	//explorer = FIFO_initial();
+	Node* current = (Node*)malloc(sizeof(Node));
+	current->vertex = src;
+	current->depth = 0;
+	current->path_cost = 0;
+	FIFO_add(frontier, current);
+	do {
+		current = (FIFO_pop(frontier));
+		explorer.push_back(current->vertex);
+		int v = current->vertex;
+		int depth = current->depth;
+		int cost = current->path_cost;
+		std::vector<Edge>::iterator j;
+		for (j = adjList[v].begin(); j != g.adjList[v].end(); ++j) {
+			path.resize(n);
+			Node* child = (Node*)malloc(sizeof(Node));
+			child->vertex = j->end;
+			child->path_cost = j->distance;
+			child->parent = current;
+			if ((checkExit(frontier, child) == false || checkExitList(explorer, child->vertex) == false)) {
+				if (child->vertex == dest) {
+					savePath(child, src, soDinh, path);
+					if (soDinh % 2 == 1) {
+						return true;
+						//return tinhThoiGian(path, g.adjList);
+					}
+				}
+				FIFO_add(frontier, child);
+			}
+		}
+	} while (frontier->nodeCount > 0);
+	return false;
+}
+
+bool Graph::ucs(Graph const& g, int src, int dest, vector<int>& path, int n) {
+	NodeList* frontier;
 	NodeList* explorer;
 	int minCost = INT_MAX;
 	int soDinh;
@@ -209,7 +262,7 @@ bool Graph::bfs(Graph const& g, int src, int dest, vector<int>& path, int n) {
 			if ((checkExit(frontier, child) == false || checkExit(explorer, child) == false)) {
 				if (child->vertex == dest) {
 					savePath(child, src, soDinh, path);
-					if (soDinh % 2 == 1 && soDinh != 1) {
+					if (soDinh % 2 == 1) {
 						return true;
 						//return tinhThoiGian(path, g.adjList);
 					}
@@ -220,52 +273,6 @@ bool Graph::bfs(Graph const& g, int src, int dest, vector<int>& path, int n) {
 	} while (frontier->nodeCount > 0);
 	return false;
 }
-
-void Graph::ucs(Graph const& g, int src, int dest, vector<bool> visited, int* pred, int n) {
-	NodeList* frontier;
-	NodeList* explorer;
-	priority_queue<int> pq;
-	int minCost = INT_MAX;
-	int soDinh;
-	vector<int>path(n);		//danh sach cac duong co the di
-	vector<int>listpath;
-	frontier = FIFO_initial();
-	explorer = FIFO_initial();
-	Node* current = (Node*)malloc(sizeof(Node));
-	current->vertex = src;
-	current->depth = 0;
-	current->path_cost = 0;
-
-	FIFO_add(frontier, current);
-	do {
-		current = (FIFO_pop(frontier));
-		FIFO_add(explorer, current);
-		int v = current->vertex;
-		int depth = current->depth;
-		int cost = current->path_cost;
-		std::vector<Edge>::iterator j;
-		for (j = adjList[v].begin(); j != g.adjList[v].end(); ++j) {
-			Node* child = (Node*)malloc(sizeof(Node));
-			child->vertex = j->end;
-			child->path_cost = j->distance + cost;
-			child->parent = current;
-			if (checkExit(frontier, child) == false || checkExit(explorer, child) == false) {
-				if (child->vertex == dest) {
-					/*	savePath(child, src, soDinh);
-						if (soDinh % 2 == 1) {
-							printPath(child, src, path);
-							return;
-						}*/
-				}
-				FIFO_add(frontier, child);
-			}
-			/*else if (checkExit(frontier, child) == true && ) {
-
-			}*/
-		}
-	} while (frontier->nodeCount > 0);
-}
-
 enum city {
 	Oradea,
 	Zerind,
