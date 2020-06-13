@@ -81,7 +81,7 @@ public:
 	}
 	bool bfs(Graph const& g, int src, int dest, vector<int>& path, int n);
 	bool ucs(Graph const& g, int src, int dest, vector<int>& path, int n);
-	int tinhThoiGian(vector<int> path, vector<vector<Edge>>adj);
+	double tinhThoiGian(vector<int> path, vector<vector<Edge>>adj);
 };
 
 void printEdge(vector<vector<Edge>> adjList)			//in ra cac dinh ke 
@@ -140,27 +140,29 @@ bool checkExitList(list<int> q, int x) {
 	return true;
 }
 
-int Graph::tinhThoiGian(vector<int> path, vector<vector<Edge>>adj) {
-	int* cost = (int*)malloc(path.size() - 1 * sizeof(int));
+double Graph::tinhThoiGian(vector<int> path, vector<vector<Edge>>adj) {
+	int n = path.size();
+	vector<int> cost(n);
 	int sum = 0;
+
 	std::vector<Edge>::iterator j;
 	std::vector<vector<Edge>>::iterator it;
-	for (int i = 0; i < path.size() - 1; i++) {
+	for (int i = 0; i < n - 1; i++) {
 		for (j = adj[path[i]].begin(); j != adj[path[i]].end(); ++j) {
 			if (j->end == path[i + 1])
 				cost[i] = j->distance;
 		}
 	}
 	int i = 0;
-	int z = path.size() - 2;
-	while (i < path.size() / 2 && z >= path.size() / 2) {
+	int z = n - 2;
+	while (i < n / 2 && z >= n / 2) {
 		sum += cost[i];
 		sum += cost[z];
 		sum += abs(cost[i] - cost[z]);
 		i++;
 		z--;
 	}
-	return sum;
+	return (double)sum / 2;
 }
 void printPathFromAToB(vector<int> path, int dest, std::string variable_names[]) {			//in ra duong di 
 	cout << "\nPath is::\n";
@@ -196,7 +198,7 @@ bool Graph::bfs(Graph const& g, int src, int dest, vector<int>& path, int n) {
 	int minCost = INT_MAX;
 	int soDinh;
 	//danh sach cac duong co the di
-//vector<int>listpath;
+	//vector<int>listpath;
 	frontier = FIFO_initial();
 	//explorer = FIFO_initial();
 	Node* current = (Node*)malloc(sizeof(Node));
@@ -222,7 +224,6 @@ bool Graph::bfs(Graph const& g, int src, int dest, vector<int>& path, int n) {
 					savePath(child, src, soDinh, path);
 					if (soDinh % 2 == 1) {
 						return true;
-						//return tinhThoiGian(path, g.adjList);
 					}
 				}
 				FIFO_add(frontier, child);

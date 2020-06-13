@@ -1,4 +1,4 @@
 ﻿  FinalProject.cpp
-D:\IT\NAM3_HK2\TTNT_Mr.Phung\DoAn\FinalProject\FinalProject\FinalProject.cpp(48,20): warning C4018: '<': signed/unsigned mismatch
-D:\IT\NAM3_HK2\TTNT_Mr.Phung\DoAn\FinalProject\FinalProject\FinalProject.cpp(63,20): warning C4018: '<': signed/unsigned mismatch
+D:\IT\NAM3_HK2\TTNT_Mr.Phung\DoAn\FinalProject\FinalProject\FinalProject.cpp(31,2): warning C4091: 'typedef ': ignored on left of 'NodeList' when no variable is declared
+D:\IT\NAM3_HK2\TTNT_Mr.Phung\DoAn\FinalProject\FinalProject\FinalProject.cpp(101,11): warning C4018: '<': signed/unsigned mismatch
   FinalProject.vcxproj -> D:\IT\NAM3_HK2\TTNT_Mr.Phung\DoAn\FinalProject\Debug\FinalProject.exe
